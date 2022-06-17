@@ -1,14 +1,18 @@
 const mongoose = require("mongoose");
-mongoose.Promise = global.Promise;
 const argon2 = require('argon2');
 const dbContext = {};
 const user = require("../models/user");
 const role = require("../models/role");
+const room = require("../models/room");
+const message = require("../models/message");
+mongoose.Promise = global.Promise;
 
 dbContext.mongoose = mongoose;
 
 dbContext.User = user;
 dbContext.Role = role;
+dbContext.Room = room;
+dbContext.Message = message;
 
 dbContext.connectMongo = async () => {
     try {
@@ -42,11 +46,10 @@ dbContext.initializeRole = async () => {
         let countUser = await User.estimatedDocumentCount();
         let newAdmin;
         if (countUser === 0) {
-            let hashPassword = await argon2.hash("admin");
             let roleAdmin = await Role.findOne({name: "ADMIN"});
             newAdmin = new User({
                 email: "admin@gmail.com",
-                password: hashPassword,
+                password: "admin",
                 fullname: "Admin",
                 roleId: roleAdmin._id
             })
