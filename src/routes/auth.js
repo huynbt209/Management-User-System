@@ -29,7 +29,7 @@ router.post(
       const { _id, email, roleId, fullname } = req.user;
       const findRole = await Role.findById(roleId);
       const role = findRole.name;
-      const token = signToken(_id);
+      const token = signToken(_id, email);
       res.cookie("token", token, {
         httpOnly: true,
       })

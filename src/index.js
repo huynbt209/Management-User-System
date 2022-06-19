@@ -8,6 +8,7 @@ const passportConfig = require("./middleware/auth");
 const passport = require("passport");
 const {connectMongo, initializeRole} = require('./dbInit/dbcontext');
 const http = require("http");
+const cookieParser = require('cookie-parser')
 
 const app = express();
 const server = http.createServer(app);
@@ -27,6 +28,7 @@ app.set('views', path.join(__dirname,'views'));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')))
 app.use("assets", express.static("assets"));
+app.use(cookieParser());
 
 
 const authRouter = require('./routes/auth');

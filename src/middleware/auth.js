@@ -6,6 +6,15 @@ const dbContext = require("../dbInit/dbcontext");
 
 const User = dbContext.User
 
+const cookieExtractToken = (req) => {
+  let token = null;
+  if (req && req.cookies) {
+    token = req.cookies.token;
+  }
+  return token;
+}
+
+
 passport.use(
   new LocalStrategy({
     usernameField: "email",
@@ -30,19 +39,20 @@ passport.use(
 );
 
 passport.serializeUser(function(user, done) {
-  done(null, user);
+  done(null, user._id);
 });
 
 passport.deserializeUser(function(user, done) {
-  done(null, user);
+  done(null, user._id);
 });
 
 passport.use(
   new JwtStrategy(
     {
       secretOrKey: process.env.ACCESS_TOKEN_SECRET,
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: cookieExtractToken,
     },
+    
     async (payload, next) => {
       try {
         let user = await User.findById(payload.subject)
@@ -61,6 +71,7 @@ passport.use(
 const auth = {
   isAuthenticated,
 };
+
 
 function isAuthenticated(req, res, next) {
   if(req.user) {
