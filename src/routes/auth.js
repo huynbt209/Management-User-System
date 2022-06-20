@@ -96,18 +96,27 @@ router.post("/register", async (req, res, next) => {
         roleId: userRoleId._id,
       });
       await newUser.save();
-      res.status(201).json({
-        status: 201,
-        message: "Register successfully",
-        user: newUser,
-        isCreated: true,
-        mesError: false,
-      });
+      // res.status(201).json({
+      //   status: 201,
+      //   message: "Register successfully",
+      //   user: newUser,
+      //   isCreated: true,
+      //   mesError: false,
+      // });
+      res.redirect("/login");
     }
   } catch (error) {
     res.status(500).json({ message: { mesBody: "Error" }, mesError: true });
     next(error);
   }
 });
+
+router.get("/logout", passport.authenticate("jwt", {session: false}),
+  (req, res) => {
+    res.clearCookie("token");
+    res.redirect("/");
+  })
+
+
 
 module.exports = router;

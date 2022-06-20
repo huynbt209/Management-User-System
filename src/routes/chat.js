@@ -6,22 +6,19 @@ const passport = require("passport");
 
 chatRouter.use(passport.authenticate("jwt", { session: false }));
 
-chatRouter.get(
-  "/chat/:id",
-  async (req, res) => {
-    const room = await Room.findOne({
-      _id: req.params.id,
-    }).populate([
-      { path: "users" },
-      { path: "messages", populate: { path: "sender" } },
-    ]);
-    if (room) {
-      res.status(200).json({
-        data: room,
-      });
-    }
+chatRouter.get("/chat/:id", async (req, res) => {
+  const room = await Room.findOne({
+    _id: req.params.id,
+  }).populate([
+    { path: "users" },
+    { path: "messages", populate: { path: "sender" } },
+  ]);
+  if (room) {
+    res.status(200).json({
+      data: room,
+    });
   }
-);
+});
 
 chatRouter.post("/message", async (req, res) => {
   const { content, senderId, roomId } = req.body;
@@ -41,8 +38,8 @@ chatRouter.post("/message", async (req, res) => {
 });
 
 chatRouter.post("/create", async (req, res, next) => {
-    const {title} = req.body;
-    if (!title)
+  const { title } = req.body;
+  if (!title)
     return res.status(400).json({
       mesError: true,
       message: { mesBody: "Please Input Title Room!" },
@@ -66,30 +63,51 @@ chatRouter.post("/create", async (req, res, next) => {
   }
 });
 
-chatRouter.get('/room-joined', async (req, res) => {
-    const userId = req.user._id;
-    const roomJoin = await Room.find({users: userId});
-    const response = await Promise.all(
-        roomJoin.map(async (room) => {
-            const { _id, title} = room;
-            return {_id, title}
-        })
-    );
-    res.render('../views/chat/room-joined', {
-        rooms: response
-    })
-})
+chatRouter.post("/join-room", async (req, res) => {
+  const { roomId } = req.body;
+  await User.findByIdAndUpdate(req.user._id, {
+    currentRoomId: roomId,
+  });
+  const roomIsActive = await Room.findById(roomId);
+  const updateUserRoom = [...roomIsActive.users, req.user._id];
+  roomIsActive.users = updateUserRoom;
+  await roomIsActive.save();
+  res.status(201).json({
+    data: roomIsActive,
+  })
+});
 
-chatRouter.get('/', async (req, res) => {
-    const allRoom = await Room.find({});
-    const response = await Promise.all(
-        allRoom.map(async (room) => {
-            const {_id, title} = room;
-            return {_id, title}
-        }))
-    res.render('../views/chat/index', {
-        rooms: response
-    });
-})
+chatRouter.get("/room-joined", async (req, res) => {
+  const userId = req.user._id;
+  const roomJoin = await Room.find({ users: userId });
+  const response = await Promise.all(
+    roomJoin.map(async (room) => {
+      const { _id, title, users, messages } = room;
+      const totalUser = users.length;
+      const totalMessage = messages.length;
+      return { _id, title, totalUser, totalMessage };
+    })
+  );
+  res.render("../views/chat/room-joined", {
+    rooms: response,
+  });
+});
+
+chatRouter.get("/", async (req, res) => {
+  const userId = req.user._id;
+  const allRoom = await Room.find({"users": {$ne: userId}});
+  const response = await Promise.all(
+    allRoom.map(async (room) => {
+      const { _id, title, users, messages } = room;
+        const totalUser = users.length;
+        const totalMessage = messages.length;
+        return { _id, title, totalUser, totalMessage };
+    })
+  );
+  res.render("../views/chat/index", {
+    rooms: response,
+    userId
+  });
+});
 
 module.exports = chatRouter;
