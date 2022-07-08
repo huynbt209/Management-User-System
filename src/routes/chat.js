@@ -14,9 +14,10 @@ chatRouter.get("/chat/:id", async (req, res) => {
     { path: "messages", populate: { path: "sender" } },
   ]);
   if (room) {
-    res.status(200).json({
-      data: room,
-    });
+    res.render("../views/chat/chat.ejs",{
+      room: room,
+    })
+    // res.status(200).json(room);
   }
 });
 
